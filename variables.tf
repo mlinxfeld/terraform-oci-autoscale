@@ -38,3 +38,7 @@ variable "webservice_ports" {
 variable "bastion_ports" {
   default = [22]
 }
+
+variable custom_bootstrap_file_name {
+  default = "bootstrap_webserver.sh"
+}
