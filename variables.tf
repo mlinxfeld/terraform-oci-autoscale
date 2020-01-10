@@ -40,5 +40,5 @@ variable "bastion_ports" {
 }
 
 variable custom_bootstrap_file_name {
-  default = "bootstrap_webserver.sh"
+  default = "./bootstrap_webserver.sh"
 }
