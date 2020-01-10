@@ -10,7 +10,7 @@ resource "oci_core_instance" "FoggyKitchenWebserver" {
   }
   metadata = {
       ssh_authorized_keys = file(var.public_key_oci)
-      user_data = base64encode(file(var.custom_bootstrap_file_name))
+      user_data = base64encode(file("./userdata/bootstrap"))
   }
   create_vnic_details {
      subnet_id = oci_core_subnet.FoggyKitchenWebSubnet.id
