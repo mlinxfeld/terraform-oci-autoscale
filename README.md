@@ -117,7 +117,30 @@ Run *terraform apply* to provision the content of this lesson (type **yes** to c
 ```
 [opc@terraform-server terraform-oci-autoscale]$ terraform apply
 
+
+An execution plan has been generated and is shown below.
+Resource actions are indicated with the following symbols:
+  + create
+ <= read (data resources)
+
+Terraform will perform the following actions:
+
+  # data.oci_core_vnic.FoggyKitchenBastionServer_VNIC1 will be read during apply
+  # (config refers to values not yet known)
+
 (...)
+
+Plan: 21 to add, 0 to change, 0 to destroy.
+
+Do you want to perform these actions?
+  Terraform will perform the actions described above.
+  Only 'yes' will be accepted to approve.
+
+  Enter a value: yes
+
+(...)
+
+Apply complete! Resources: 21 added, 0 changed, 0 destroyed.
 
 ```
 
@@ -127,6 +150,25 @@ After testing the environment you can remove the OCI autoscale infra. You should
 ```
 [opc@terraform-server terraform-oci-autoscale]$ terraform destroy
 
+oci_identity_compartment.FoggyKitchenCompartment: Refreshing state... [id=ocid1.compartment.oc1..aaaaaaaagillnk7ttj6wpdhmewpibpxc5gbmrfxdtmaa3gfgjzbudesm3tsq]
+oci_core_virtual_network.FoggyKitchenVCN: Refreshing state... [id=ocid1.vcn.oc1.eu-frankfurt-1.amaaaaaadngk4gialu6ikx45brprlpzi2oyibbsl6slts36bar4vgcjlmgjq]
 (...)
 
+Plan: 0 to add, 0 to change, 21 to destroy.
+
+Do you really want to destroy all resources?
+  Terraform will destroy all your managed infrastructure, as shown above.
+  There is no undo. Only 'yes' will be accepted to confirm.
+
+  Enter a value: yes
+
+(...)
+
+oci_core_nat_gateway.FoggyKitchenNATGateway: Destruction complete after 1s
+oci_core_virtual_network.FoggyKitchenVCN: Destroying... [id=ocid1.vcn.oc1.eu-frankfurt-1.amaaaaaadngk4gialu6ikx45brprlpzi2oyibbsl6slts36bar4vgcjlmgjq]
+oci_core_virtual_network.FoggyKitchenVCN: Destruction complete after 0s
+oci_identity_compartment.FoggyKitchenCompartment: Destroying... [id=ocid1.compartment.oc1..aaaaaaaagillnk7ttj6wpdhmewpibpxc5gbmrfxdtmaa3gfgjzbudesm3tsq]
+oci_identity_compartment.FoggyKitchenCompartment: Destruction complete after 0s
+
+Destroy complete! Resources: 21 destroyed.
 ```
