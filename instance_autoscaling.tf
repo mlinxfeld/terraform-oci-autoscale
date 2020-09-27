@@ -1,4 +1,4 @@
-resource "oci_autoscaling_auto_scaling_configuration" "FoggyKitchenAutoScalingConfiguration" {
+resource "oci_autoscaling_auto_scaling_configuration" "FoggyKitchenThresholdAutoScalingConfiguration" {
     auto_scaling_resources {
 
         id = oci_core_instance_pool.FoggyKitchenInstancePool.id
@@ -6,7 +6,7 @@ resource "oci_autoscaling_auto_scaling_configuration" "FoggyKitchenAutoScalingCo
     }
     compartment_id = oci_identity_compartment.FoggyKitchenCompartment.id
     policies {
-        display_name = "FoggyKitchenAutoScalingConfigurationPolicies"
+        display_name = "FoggyKitchenThresholdAutoScalingConfigurationPolicies"
         capacity {
             initial = "2"
             max = "4"
@@ -18,7 +18,7 @@ resource "oci_autoscaling_auto_scaling_configuration" "FoggyKitchenAutoScalingCo
                 type = "CHANGE_COUNT_BY"
                 value = "1"
             }
-            display_name = "FoggyKitchenAutoScalingConfigurationPoliciesScaleOutRule"
+            display_name = "FoggyKitchenThresholdAutoScalingConfigurationPoliciesScaleOutRule"
             metric {
                 metric_type = "CPU_UTILIZATION"
                 threshold {
@@ -32,7 +32,7 @@ resource "oci_autoscaling_auto_scaling_configuration" "FoggyKitchenAutoScalingCo
                 type  = "CHANGE_COUNT_BY"
                 value = "-1"
             }
-            display_name = "FoggyKitchenAutoScalingConfigurationPoliciesScaleInRule"
+            display_name = "FoggyKitchenThresholdAutoScalingConfigurationPoliciesScaleInRule"
             metric {
                 metric_type = "CPU_UTILIZATION"
                 threshold {
@@ -43,5 +43,53 @@ resource "oci_autoscaling_auto_scaling_configuration" "FoggyKitchenAutoScalingCo
         }
     }
     cool_down_in_seconds = "300"
-    display_name = "FoggyKitchenAutoScalingConfiguration"
+    display_name = "FoggyKitchenThresholdAutoScalingConfiguration"
 }
+
+/*
+resource "oci_autoscaling_auto_scaling_configuration" "FoggyKitchenScheduledAutoScalingConfiguration" {
+    auto_scaling_resources {
+
+        id = oci_core_instance_pool.FoggyKitchenInstancePool.id
+        type = "instancePool"
+    }
+    compartment_id = oci_identity_compartment.FoggyKitchenCompartment.id
+    
+    policies {
+        display_name = "FoggyKitchenScheduledAutoScalingConfigurationScaleOutPolicy"
+        capacity {
+            initial = "4"
+            max = "4"
+            min = "2"
+        }
+        policy_type = "scheduled"
+        execution_schedule {
+            # 14:00, 27/09/2020
+            expression = "0 0 14 27 9 ? 2020"
+            timezone   = "UTC"
+            type       = "cron"
+        }
+
+    }
+
+    policies {
+        display_name = "FoggyKitchenScheduledAutoScalingConfigurationScaleInPolicy"
+        capacity {
+            initial = "2"
+            max = "2"
+            min = "2"
+        }
+        policy_type = "scheduled"
+        execution_schedule {
+            # 13:15, 27/09/2020
+            expression = "0 15 13 27 9 ? 2020"
+            timezone   = "UTC"
+            type       = "cron"
+        }
+
+    }
+
+    cool_down_in_seconds = "300"
+    display_name = "FoggyKitchenScheduledAutoScalingConfiguration"
+}
+*/
