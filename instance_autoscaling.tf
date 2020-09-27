@@ -64,8 +64,8 @@ resource "oci_autoscaling_auto_scaling_configuration" "FoggyKitchenScheduledAuto
         }
         policy_type = "scheduled"
         execution_schedule {
-            # 14:00, 27/09/2020
-            expression = "0 0 14 27 9 ? 2020"
+            # 12:00, 28/09/2020
+            expression = "0 0 12 28 9 ? 2020"
             timezone   = "UTC"
             type       = "cron"
         }
@@ -81,8 +81,8 @@ resource "oci_autoscaling_auto_scaling_configuration" "FoggyKitchenScheduledAuto
         }
         policy_type = "scheduled"
         execution_schedule {
-            # 13:15, 27/09/2020
-            expression = "0 15 13 27 9 ? 2020"
+            # 12:15, 28/09/2020
+            expression = "0 15 12 28 9 ? 2020"
             timezone   = "UTC"
             type       = "cron"
         }
