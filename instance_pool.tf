@@ -2,7 +2,7 @@ resource "oci_core_instance_pool" "FoggyKitchenInstancePool" {
     compartment_id = oci_identity_compartment.FoggyKitchenCompartment.id
     instance_configuration_id = oci_core_instance_configuration.FoggyKitchenWebserverInstanceConfiguration.id  
     placement_configurations {
-        availability_domain = var.ADs[2]
+        availability_domain = lookup(data.oci_identity_availability_domains.ADs.availability_domains[1], "name")
         primary_subnet_id = oci_core_subnet.FoggyKitchenWebSubnet.id
 
     }

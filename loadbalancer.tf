@@ -43,7 +43,4 @@ resource "oci_load_balancer_backend" "FoggyKitchenPublicLoadBalancerBackend" {
 }
 
 
-output "FoggyKitchenPublicLoadBalancer_Public_IP" {
-  value = [oci_load_balancer_load_balancer.FoggyKitchenPublicLoadBalancer.ip_addresses]
-}
 
