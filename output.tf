@@ -1,5 +1,5 @@
 output "FoggyKitchenPublicLoadBalancer_Public_IP" {
-  value = [oci_load_balancer_load_balancer.FoggyKitchenPublicLoadBalancer.ip_addresses]
+  value = oci_load_balancer_load_balancer.FoggyKitchenPublicLoadBalancer.ip_address_details[0].ip_address
 }
 
 output "FoggyKitchenBastionServer_PublicIP" {

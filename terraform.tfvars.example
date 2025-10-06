@@ -1,0 +1,17 @@
+# Authentication
+tenancy_ocid            = "ocid1.tenancy.oc1..(...)"
+user_ocid               = "ocid1.user.oc1..(...)"
+fingerprint             = "a7:(...):40"
+private_key_path        = "/Users/myuser/.oci/oci_api_key.pem"
+
+# Region
+region = "eu-frankfurt-1"
+
+# Compartment
+compartment_ocid = "ocid1.compartment.oc1..(...)"
+
+# Enable Instance Configuration, Pool and then one of the Autoscaling options
+enable_instance_configuration = true
+enable_instance_pool = false
+enable_threshold_autoscaling = false
+enable_scheduled_autoscaling = false

@@ -3,11 +3,19 @@ data "oci_identity_availability_domains" "ADs" {
   compartment_id = var.tenancy_ocid
 }
 
-# Gets the Id of a specific OS Images
-data "oci_core_images" "OSImageLocal" {
-  #Required
-  compartment_id = var.compartment_ocid
-  display_name   = var.OsImage
+# Get the latest Oracle Linux image
+data "oci_core_images" "InstanceImageOCID" {
+  compartment_id           = oci_identity_compartment.FoggyKitchenCompartment.id
+  operating_system         = var.instance_os
+  operating_system_version = var.linux_os_version
+  shape                    = var.shape
+
+
+  filter {
+    name   = "display_name"
+    values = ["^.*Oracle[^G]*$"]
+    regex  = true
+  }
 }
 
 data "oci_core_vnic_attachments" "FoggyKitchenBastionServer_VNIC1_attach" {

@@ -1,174 +1,193 @@
-# Terraform OCI Instance Autoscaling 
+# 🚀 Terraform OCI Compute Autoscaling
 
-## Project description
+This repository contains a complete example of **OCI Compute autoscaling** built with [Terraform](https://www.terraform.io) / [OpenTofu](https://opentofu.org).  
+It provisions a private web tier on **Oracle Cloud Infrastructure (OCI)** and scales automatically using:
 
-In this repository, I have documented my hands on experience with Terrafrom for the purpose of OCI Instance Autoscaling deployment. This set of HCL based Terraform files whioch can customized according to any requirements.   
-## How to use code 
+- 🧱 **Instance Configuration** – defines the golden template for compute instances  
+- 🌀 **Instance Pool** – manages a fleet of identical backend servers  
+- 📈 **Autoscaling Configuration** – threshold-based or scheduled scaling policies
 
-### STEP 1.
+The setup is intentionally minimal and modular — designed as a building block for larger environments.
 
-Clone the repo from github by executing the command as follows and then go to terraform-oci-autoscale directory:
+---
 
-```
-[opc@terraform-server opc]$ git clone https://github.com/mlinxfeld/terraform-oci-autoscale.git
-Cloning into 'terraform-oci-autoscale'...
-remote: Enumerating objects: 19, done.
-remote: Counting objects: 100% (19/19), done.
-remote: Compressing objects: 100% (16/16), done.
-remote: Total 19 (delta 3), reused 19 (delta 3), pack-reused 0
-Unpacking objects: 100% (19/19), done.
+![Terraform OCI Autoscaling Architecture](./terraform-oci-autoscale.png)  
+*Figure 1 – OCI Compute Autoscaling architecture using Instance Configuration, Instance Pool and Autoscaling Configuration.*
 
-[opc@terraform-server opc]$ cd terraform-oci-autoscale/
+---
 
-[opc@terraform-server terraform-oci-autoscale]$ ls -latr
-total 76
-drwxrwxr-x. 4 opc opc   74 01-10 11:25 ..
--rw-rw-r--. 1 opc opc  290 01-10 11:25 README.md
--rw-rw-r--. 1 opc opc 1741 01-10 11:25 loadbalancer.tf
--rw-rw-r--. 1 opc opc  250 01-10 11:25 internet_gateway.tf
--rw-rw-r--. 1 opc opc  740 01-10 11:25 instance_pool.tf
--rw-rw-r--. 1 opc opc  313 01-10 11:25 instance_configuration.tf
--rw-rw-r--. 1 opc opc 1444 01-10 11:25 instance_autoscaling.tf
--rw-rw-r--. 1 opc opc  442 01-10 11:25 dhcp_options.tf
--rw-rw-r--. 1 opc opc  144 01-10 11:25 compartment.tf
--rwxrwxr-x. 1 opc opc 1115 01-10 11:25 bastionserver.tf
--rw-rw-r--. 1 opc opc 1080 01-10 11:25 webserver_instance.tf
--rw-rw-r--. 1 opc opc  225 01-10 11:25 vcn.tf
--rw-rw-r--. 1 opc opc 1056 01-10 11:25 variables.tf
--rw-rw-r--. 1 opc opc 1567 01-10 11:25 subnets.tf
--rw-rw-r--. 1 opc opc 1445 01-10 11:25 security_lists.tf
--rw-rw-r--. 1 opc opc  852 01-10 11:25 routes.tf
--rw-rw-r--. 1 opc opc  239 01-10 11:25 provider.tf
--rw-rw-r--. 1 opc opc  235 01-10 11:25 natgateway.tf
-drwxrwxr-x. 8 opc opc 4096 01-10 11:25 .git
-drwxrwxr-x. 3 opc opc 4096 01-10 11:25 .
+## 🏗️ Architecture Overview
 
+- **VCN** with a private backend subnet for autoscaled webservers  
+- Optional Bastion and NAT Gateway for administrative and outbound traffic  
+- Instance Configuration → Instance Pool → Autoscaling Configuration chain
+
+> Autoscaling can be triggered either by **average CPU utilization** or by **scheduled cron expressions**.
+
+---
+
+## 📋 Prerequisites
+
+- Terraform or OpenTofu ≥ 1.6  
+- OCI account + API key (tenancy OCID, user OCID, fingerprint, private key)  
+- A target compartment  
+- An SSH public key if your bootstrap uses it (optional)
+
+---
+
+## ⚙️ Configuration
+
+Use the provided [`terraform.tfvars.example`](./terraform.tfvars.example) file as the **single source of truth** for your environment.
+
+```bash
+cp terraform.tfvars.example terraform.tfvars
 ```
 
-### STEP 2.
+### terraform.tfvars.example
 
-Within web browser go to URL: https://www.terraform.io/downloads.html. Find your platform and download the latest version of your terraform runtime. Add directory of terraform binary into PATH and check terraform version:
+```hcl
+# Authentication
+tenancy_ocid      = "ocid1.tenancy.oc1..(...)"
+user_ocid         = "ocid1.user.oc1..(...)"
+fingerprint       = "a7:(...):40"
+private_key_path  = "/Users/myuser/.oci/oci_api_key.pem"
 
-```
-[opc@terraform-server terraform-oci-autoscale]$ export PATH=$PATH:/home/opc/terraform
+# Region
+region = "eu-frankfurt-1"
 
-[opc@terraform-server terraform-oci-autoscale]$ terraform --version
+# Compartment
+compartment_ocid = "ocid1.compartment.oc1..(...)"
 
-Terraform v0.12.16
-
-Your version of Terraform is out of date! The latest version
-is 0.12.17. You can update by downloading from https://www.terraform.io/downloads.html
-```
-
-### STEP 3. 
-Next create environment file with TF_VARs:
-
-```
-[opc@terraform-server terraform-oci-autoscale]$ vi setup_oci_tf_vars.sh
-export TF_VAR_user_ocid="ocid1.user.oc1..aaaaaaaaob4qbf2(...)uunizjie4his4vgh3jx5jxa"
-export TF_VAR_tenancy_ocid="ocid1.tenancy.oc1..aaaaaaaas(...)krj2s3gdbz7d2heqzzxn7pe64ksbia"
-export TF_VAR_compartment_ocid="ocid1.tenancy.oc1..aaaaaaaasbktyckn(...)ldkrj2s3gdbz7d2heqzzxn7pe64ksbia"
-export TF_VAR_fingerprint="00:f9:d1:41:bb:57(...)82:47:e6:00"
-export TF_VAR_private_key_path="/tmp/oci_api_key.pem"
-export TF_VAR_region="eu-frankfurt-1"
-export TF_VAR_private_key_oci="/tmp/id_rsa"
-export TF_VAR_public_key_oci="/tmp/id_rsa.pub"
-
-[opc@terraform-server terraform-oci-autoscale]$ source setup_oci_tf_vars.sh
+# Feature toggles
+enable_instance_configuration  = true
+enable_instance_pool           = false
+enable_threshold_autoscaling   = false
+enable_scheduled_autoscaling   = false
 ```
 
-### STEP 4.
-Run *terraform init* with upgrade option just to download the lastest neccesary providers:
+---
 
-```
-[opc@terraform-server terraform-oci-autoscale]$ terraform init -upgrade
+## 🧭 Recommended Workflow
 
-Initializing the backend...
+1️⃣ **Validate Instance Configuration**  
+Enable only `enable_instance_configuration = true`, apply and verify the base VM settings.
 
-Initializing provider plugins...
-- Checking for available provider plugins...
-- Downloading plugin for provider "null" (hashicorp/null) 2.1.2...
-- Downloading plugin for provider "oci" (hashicorp/oci) 3.54.0...
+2️⃣ **Enable Instance Pool**  
+Set `enable_instance_pool = true` and re-apply. The pool will launch initial instances.
 
-The following providers do not have any version constraints in configuration,
-so the latest version was installed.
+3️⃣ **Choose one autoscaling mode**
 
-To prevent automatic upgrades to new major versions that may contain breaking
-changes, it is recommended to add version = "..." constraints to the
-corresponding provider blocks in configuration, with the constraint strings
-suggested below.
+- **Threshold-based (CPU):**
 
-* provider.null: version = "~> 2.1"
-
-Terraform has been successfully initialized!
-
-You may now begin working with Terraform. Try running "terraform plan" to see
-any changes that are required for your infrastructure. All Terraform commands
-should now work.
-
-If you ever set or change modules or backend configuration for Terraform,
-rerun this command to reinitialize your working directory. If you forget, other
-commands will detect it and remind you to do so if necessary.
+```hcl
+enable_threshold_autoscaling = true
+pool_min      = 2
+pool_initial  = 2
+pool_max      = 6
+scale_out_cpu = 70
+scale_in_cpu  = 25
 ```
 
-### STEP 5.
-Run *terraform apply* to provision the content of this lesson (type **yes** to confirm the the apply phase):
+- **Scheduled (cron):**
 
-```
-[opc@terraform-server terraform-oci-autoscale]$ terraform apply
-
-
-An execution plan has been generated and is shown below.
-Resource actions are indicated with the following symbols:
-  + create
- <= read (data resources)
-
-Terraform will perform the following actions:
-
-  # data.oci_core_vnic.FoggyKitchenBastionServer_VNIC1 will be read during apply
-  # (config refers to values not yet known)
-
-(...)
-
-Plan: 21 to add, 0 to change, 0 to destroy.
-
-Do you want to perform these actions?
-  Terraform will perform the actions described above.
-  Only 'yes' will be accepted to approve.
-
-  Enter a value: yes
-
-(...)
-
-Apply complete! Resources: 21 added, 0 changed, 0 destroyed.
-
+```hcl
+enable_scheduled_autoscaling = true
+pool_min     = 2
+pool_initial = 2
+pool_max     = 6
+# Example: Mon–Fri 08:00 scale out, 20:00 scale in (UTC)
+schedule_scale_out_cron = "0 8 * * 1-5"
+schedule_scale_in_cron  = "0 20 * * 1-5"
 ```
 
-### STEP 6.
-After testing the environment you can remove the OCI autoscale infra. You should just run *terraform destroy* (type **yes** for confirmation of the destroy phase):
+> ⚠️ Autoscaling modes are **mutually exclusive** — enabling both will produce a plan error.
+
+---
+
+## 🚀 Usage
+
+Initialize providers and modules:
+
+```bash
+tofu init
+```
+
+Show planned changes:
+
+```bash
+tofu plan
+```
+
+Apply the configuration:
+
+```bash
+tofu apply
+```
+
+Destroy resources:
+
+```bash
+tofu destroy -auto-approve
+```
+
+---
+
+## 🧪 Testing Autoscaling
+
+For **threshold-based autoscaling**, generate load against your backend (e.g., `ab`, `wrk`) and monitor:
+
+- **OCI Console → Compute → Instance Pools → Scaling Activity**  
+- Instance CPU metrics in **OCI Monitoring**
+
+For **scheduled autoscaling**, adjust cron expressions and observe pool resizing at expected times.
+
+---
+
+## 📂 Repository Structure
 
 ```
-[opc@terraform-server terraform-oci-autoscale]$ terraform destroy
-
-oci_identity_compartment.FoggyKitchenCompartment: Refreshing state... [id=ocid1.compartment.oc1..aaaaaaaagillnk7ttj6wpdhmewpibpxc5gbmrfxdtmaa3gfgjzbudesm3tsq]
-oci_core_virtual_network.FoggyKitchenVCN: Refreshing state... [id=ocid1.vcn.oc1.eu-frankfurt-1.amaaaaaadngk4gialu6ikx45brprlpzi2oyibbsl6slts36bar4vgcjlmgjq]
-(...)
-
-Plan: 0 to add, 0 to change, 21 to destroy.
-
-Do you really want to destroy all resources?
-  Terraform will destroy all your managed infrastructure, as shown above.
-  There is no undo. Only 'yes' will be accepted to confirm.
-
-  Enter a value: yes
-
-(...)
-
-oci_core_nat_gateway.FoggyKitchenNATGateway: Destruction complete after 1s
-oci_core_virtual_network.FoggyKitchenVCN: Destroying... [id=ocid1.vcn.oc1.eu-frankfurt-1.amaaaaaadngk4gialu6ikx45brprlpzi2oyibbsl6slts36bar4vgcjlmgjq]
-oci_core_virtual_network.FoggyKitchenVCN: Destruction complete after 0s
-oci_identity_compartment.FoggyKitchenCompartment: Destroying... [id=ocid1.compartment.oc1..aaaaaaaagillnk7ttj6wpdhmewpibpxc5gbmrfxdtmaa3gfgjzbudesm3tsq]
-oci_identity_compartment.FoggyKitchenCompartment: Destruction complete after 0s
-
-Destroy complete! Resources: 21 destroyed.
+.
+├── bastion_instance.tf                  # (optional) Bastion host
+├── compartment.tf                       # Dedicated compartment
+├── datasources.tf                       # Image and AD lookups
+├── instance_autoscaling_scheduled.tf    # Scheduled autoscaling policy
+├── instance_autoscaling_threshold.tf    # CPU threshold autoscaling policy
+├── instance_configuration.tf           # Instance Configuration (golden template)
+├── instance_pool.tf                    # Instance Pool definition
+├── loadbalancer.tf                     # Public LB (optional)
+├── locals.tf                           # Derived variables (tags, naming)
+├── network.tf                          # VCN, subnets, routes, gateways
+├── output.tf                           # Outputs (IPs, pool IDs)
+├── provider.tf                         # OCI provider setup
+├── tls.tf                              # Key generation (optional)
+├── variables.tf                        # Variable definitions
+├── webserver_instance.tf               # Single reference instance
+├── userdata/                           # Bootstrap scripts (cloud-init)
+│   └── bootstrap.sh
+├── terraform.tfvars.example            # Example variable file
+└── README.md
 ```
+
+---
+
+## 📝 Notes
+
+- Authentication uses **user API keys** for simplicity. For production, consider **Instance Principals** or Dynamic Groups with IAM policies.  
+- All resources are created in a **dedicated compartment**.  
+- Backend subnet is **private by default**; only the Load Balancer is public.  
+- You can treat this repo as a **Terraform module** in larger deployments.
+
+---
+
+## 🧹 Clean Up
+
+```bash
+tofu destroy -auto-approve
+```
+
+---
+
+## 🪪 License
+
+Licensed under the Universal Permissive License (UPL), Version 1.0.  
+See [LICENSE](./LICENSE) for details.
